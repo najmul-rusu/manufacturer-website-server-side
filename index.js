@@ -65,6 +65,13 @@ async function run() {
           res.send(reviews);
       });
 
+      //add review
+      app.post('/review', async (req, res) => {
+        const newreview = req.body;
+        const result = await reviewCollection.insertOne(newreview);
+        res.send(result);
+    });
+
 
       // get all product
       app.get("/product", async (req, res) => {
@@ -85,7 +92,6 @@ async function run() {
 
 
       //add product
-
       app.post('/addproduct', async (req, res) => {
         const newitem = req.body;
         const result = await productCollection.insertOne(newitem);
