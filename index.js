@@ -57,6 +57,15 @@ async function run() {
           });
       }
 
+      // get all reviews
+      app.get("/review", async (req, res) => {
+          const query = {};
+          const cursor = reviewCollection.find(query);
+          const reviews = await cursor.toArray();
+          res.send(reviews);
+      });
+
+
       // get all product
       app.get("/product", async (req, res) => {
           const query = {};
