@@ -3,8 +3,6 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-// var nodemailer = require('nodemailer');
-// var sgTransport = require('nodemailer-sendgrid-transport');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
@@ -51,6 +49,7 @@ async function run() {
           const token = authHeader.split(' ')[1];
           jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
               if (err) {
+                console.log(err)
                   return res.status(403).send({ message: 'Forbidden access' })
               }
               req.decoded = decoded;
@@ -76,120 +75,83 @@ async function run() {
       });
 
 
-      // get review
+      //add product
 
+      app.post('/addproduct', async (req, res) => {
+        const newitem = req.body;
+        const result = await productCollection.insertOne(newitem);
+        res.send(result);
+    });
 
-      app.get('/reviews', async (req, res) => {
-          const query = {};
-          const cursor = gimbalCollection.find(query);
-          const reviews = await cursor.toArray();
-          res.send(reviews);
-      });
-
-
-
-      //post reviews
-
-
-      app.post('/reviews', async (req, res) => {
-          const reviews = req.body;
-          const query = { name: reviews.name, email: reviews.email }
-          const exists = await gimbalCollection.findOne(query);
-          if (exists) {
-              return res.send({ success: false, reviews: exists })
-          }
-          const result = await bookingCollection.insertOne(reviews);
-          return res.send({ success: true, result });
-      })
-
-
-
+    //delete products
+    app.delete('/product/:id', async (req, res) => {
+        const id = req.params.id;
+        const query = { _id: ObjectId(id) };
+        const inventory = await productCollection.deleteOne(query);
+        res.send(inventory);
+    });
 
 
       //load all  user
-      app.get('/user', verifyJWT, async (req, res) => {
+      app.get('/user',verifyJWT,async (req, res) => {
           const users = await userCollection.find().toArray();
           res.send(users);
       });
 
 
-      //user info save krbo database e
 
-      app.put('/user/:email', async (req, res) => {
-          const email = req.params.email;
-          const user = req.body;
-          const filter = { email: email };
-          const options = { upsert: true };
-          const updateDoc = {
-              $set: user,
-          };
-          const result = await userCollection.updateOne(filter, updateDoc, options);
-          const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
-          res.send({ result, token });
-      })
+      app.put('/user/admin/:email', verifyJWT,async (req, res) => {
+        const email = req.params.email;
+        const requester = req.decoded.email;
+        const requesterAccount = await userCollection.findOne({email: requester})
+        if (requesterAccount.role ==='admin') {
+            const filter = { email: email };
+        const updateDoc = {
+            $set: {role:'admin'},
+        };
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send( result );
+        }
+        else{
+            res.status(403).send({message:'forbidden'})
+        }
+        
+    });
 
+    
+   /*  app.get('/user/:email', async (req, res) => {
+      const email = req.params.email;
+      const user = await userCollection.findOne({ email: email });
 
-
-
-
-      //user to make an  admin
-
-      app.put('/user/admin/:email', verifyJWT, async (req, res) => {
-          const email = req.params.email;
-          const requester = req.decoded.email;
-          const requesterAccount = await userCollection.findOne({ email: requester });
-          if (requesterAccount.role === 'admin') {
-              const filter = { email: email };
-              const updateDoc = {
-                  $set: { role: 'admin' },
-              };
-              const result = await userCollection.updateOne(filter, updateDoc);
-              res.send(result);
-          }
-          else {
-              res.status(403).send({ message: 'forbidden' });
-          }
-
-      })
+      res.send(user)
+  }) */
 
 
-
-      // admin access verify from db
-
-      app.get('/admin/:email', async (req, res) => {
-          const email = req.params.email;
-          const user = await userCollection.findOne({ email: email });
-          const isAdmin = user.role === 'admin';
-          res.send({ admin: isAdmin })
-      })
+    app.put('/user/:email', async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+          $set:user,
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+      res.send({ result, token });
+  });
 
 
 
-      // get user from database
-
-      app.get('/user/:email', async (req, res) => {
-          const email = req.params.email;
-          const user = await userCollection.findOne({ email: email });
-
-          res.send(user)
-      })
+  app.get('/admin/:email', async (req, res) => {
+    const email = req.params.email;
+    const user = await userCollection.findOne({ email: email });
+    const isAdmin = user.role === 'admin';
+    res.send({ admin: isAdmin })
+})
 
 
-      //add product
+ 
 
-      app.post('/addproduct', async (req, res) => {
-          const newitem = req.body;
-          const result = await productCollection.insertOne(newitem);
-          res.send(result);
-      });
-
-      //delete products
-      app.delete('/product/:id', async (req, res) => {
-          const id = req.params.id;
-          const query = { _id: ObjectId(id) };
-          const inventory = await productCollection.deleteOne(query);
-          res.send(inventory);
-      });
 
 
   } finally {
