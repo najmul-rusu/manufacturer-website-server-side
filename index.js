@@ -3,14 +3,13 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware.
 const corsConfig = {
-  origin:'https://evediva-manufacturer.web.app/',
+  origin:'https://evediva-manufacturer.web.app',
 }
 app.use(cors(corsConfig))
 app.use(express.json());
