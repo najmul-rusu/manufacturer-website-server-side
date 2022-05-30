@@ -115,7 +115,7 @@ async function run() {
 
 
 
-      app.put('/user/admin/:email', async (req, res) => {
+      app.put('/user/admin/:email',verifyJWT, async (req, res) => {
         const email = req.params.email;
         const requester = req.decoded.email;
         const requesterAccount = await userCollection.findOne({email: requester})
@@ -142,7 +142,7 @@ async function run() {
   }) */
 
 
-    app.put('/user/:email', async (req, res) => {
+    app.put('/user/:email',verifyJWT, async (req, res) => {
       const email = req.params.email;
       const user = req.body;
       const filter = { email: email };
@@ -157,7 +157,7 @@ async function run() {
 
 
 
-  app.get('/admin/:email', async (req, res) => {
+  app.get('/admin/:email',verifyJWT, async (req, res) => {
     const email = req.params.email;
     const user = await userCollection.findOne({ email: email });
     const isAdmin = user.role === 'admin';
