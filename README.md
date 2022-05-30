@@ -1,4 +1,4 @@
-# Project Name : EVeDiva Manufacturer
+# EVeDiva Manufacturer
 
 [Live Site](https://evediva-manufacturer.web.app).
 
